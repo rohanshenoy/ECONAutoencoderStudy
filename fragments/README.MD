@@ -63,15 +63,56 @@ Each row in the file represents a module but several rows can correspond to one 
 
 The output (and training) data from this last step (from the ECON-T simulation), can be found here:
 - ttbar: (neLinks 2-5 and no sim-Energy infomation) https://cernbox.cern.ch/index.php/s/YpAWu24aw6EaBk7
-- electron samples: (neLinks 2-5 with sim-Energy information) /eos/uscms/store/user/dnoonan/AE_TrainingData/NewData/Skim/ele200PUData_TrainingData_SignalAllocation/
+- electron samples: (neLinks 2-5 with sim-Energy information) `/eos/uscms/store/user/dnoonan/AE_TrainingData/NewData/Skim/ele200PUData_TrainingData_SignalAllocation/`
 
 ## Validation data for physics studies
 
-Running with TPG release 3.22.1.
+Running with TPG release:
+- v3.22.1. (had bug on normalization fixed by danny [here](https://github.com/PFCal-dev/cmssw/commit/65625ee12e0c1a527820d20aeaaa656cf6f4df48#diff-0003f7b8caf7041ba5afce04bcfa74b1a2593d991fc3b5b84294d5ee9e680ae4)
+- v3.23.3_1130 (fixes in for AE)
 
+The implementation of AE in CMSSW is in [HGCalConcentratorAutoEncoderImpl.cc](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc):
+- The [`select` function](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L122-L174) gets called once per event per wafer.
+- It first loops over the trigger cells, remaps from the TC U/V coordinates to the 0-47 indexing we have been using for the training, then fills the mipPt list.
+```  
+for (const auto& trigCell : trigCellVecInput) {
+    ...
+    modSum += trigCell.mipPt();
+}
+```
+- Then it normalizes the mipPt list, and quantizes it. 
+- Puts stuff into tensors and [runs the encoder with tensorflow](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L198-L225)
+- [Runs the decoder](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L227-L248)
+- Loops over decoded values, and [puts them back into trigger cell objects](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L256-L304) (which is what the backend code is expecting and uses)
+- There are different configuration options, to allow multiple trainings for different number of eLinks in the [hgcalConcentratorProducer](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/python/hgcalConcentratorProducer_cfi.py#L184-L226)
+
+[comment]: <> (Danny's config /uscms/home/dnoonan/work/HGCAL/CMSSW_11_2_0_pre5/src/L1Trigger/L1THGCalUtilities/test/NewTrainings_QKeras_cfg.py)
+[comment]: <> (it requires the models dir /uscms/home/dnoonan/work/HGCAL/CMSSW_11_2_0_pre5/src/L1Trigger/L1THGCalUtilities/test/AEmodels)
+
+Configuration files:
 - For 200PU electron gun ( /SingleElectron_PT2to200/Phase2HLTTDRWinter20DIGI-PU200_110X_mcRun4_realistic_v3_ext2-v2/GEN-SIM-DIGI-RAW) and 0PU photon gun (/SinglePhoton_PT2to200/Phase2HLTTDRWinter20DIGI-NoPU_110X_mcRun4_realistic_v3-v2/GEN-SIM-DIGI-RAW):
-produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py
+`produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py`
 
--For 200PU MinBias (/MinBias_TuneCP5_14TeV-pythia8/Phase2HLTTDRWinter20DIGI-PU200_110X_mcRun4_realistic_v3-v3/GEN-SIM-DIGI-RAW/):
-produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
+- For 200PU MinBias (/MinBias_TuneCP5_14TeV-pythia8/Phase2HLTTDRWinter20DIGI-PU200_110X_mcRun4_realistic_v3-v3/GEN-SIM-DIGI-RAW/):
+`produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py`
 
+## CMSSWW instructions
+
+Follow the twiki, e.g.:
+```
+export SCRAM_ARCH=slc7_amd64_gcc900 
+cmsrel CMSSW_11_3_0
+cd CMSSW_11_3_0/src/
+cmsenv
+git cms-init
+git remote add pfcaldev https://github.com/PFCal-dev/cmssw.git
+git fetch pfcaldev
+git cms-merge-topic -u PFCal-dev:v3.23.3_1130
+scram b -j4
+```
+
+Running configs:
+```
+cd python
+cmsRun 
+```
