@@ -111,8 +111,31 @@ git cms-merge-topic -u PFCal-dev:v3.23.3_1130
 scram b -j4
 ```
 
-Running configs:
+Getting configs:
 ```
-cd python
-cmsRun 
+cd L1Trigger/L1THGCal/test
+wget https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py
+wget https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
 ```
+
+Get models:
+```
+cd  ../L1THGCal/data/
+# copy AEmodels folder in data/ dir (latest models available at https://www.dropbox.com/s/f9rib5uyv2f0qzp/AEmodels.tgz?dl=0)
+cd -
+```
+
+Then you can run, e.g.:
+```
+cmsRun produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
+```
+This will produce a `ntuple.root` file, which will contain subdirectories, e.g. `FloatingpointAutoEncoderTelescopeMSEDummyHistomaxxydr015Genclustersntuple->cd()` , each with a TTree inside. You can get the contents of the tree with `HGCalTriggerNtuple->Show(0)`.
+
+To submit a large production you will need to run over all the files. 
+You can use `crab` for this.
+
+The crab configs are e.g. [here for electrons](https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/eleCrabConfig.py). Make sure to change the output username.
+
+## Processing the ntuples
+
+Refer to instructions in https://github.com/cmantill/ECONAutoencoderStudy#readme
