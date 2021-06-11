@@ -1,17 +1,44 @@
 #!/usr/bin/env python
 
-
 import numpy as np
 import pandas as pd
 import os
 import sys
-import uproot # uproot4
+import uproot4
 from datetime import date
-import optparse
+import argparse
+import subprocess
 from itertools import chain
 
+import warnings
+from pandas.core.common import SettingWithCopyWarning
+warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
 workdir=os.getcwd()
+
+def xrd_prefix(filepaths):
+    prefix = ''
+    allow_prefetch = False
+    if not isinstance(filepaths, (list, tuple)):
+        filepaths = [filepaths]
+    filepath = filepaths[0]
+    if filepath.startswith('/eos/cms'):
+        prefix = 'root://eoscms.cern.ch/'
+    elif filepath.startswith('/eos/user'):
+        prefix = 'root://eosuser.cern.ch/'
+    elif filepath.startswith('/eos/uscms'):
+        prefix = 'root://cmseos.fnal.gov/'
+    elif filepath.startswith('/store/'):
+        # remote file
+        import socket
+        host = socket.getfqdn()
+        if 'cern.ch' in host:
+            prefix = 'root://xrootd-cms.infn.it//'
+        else:
+            prefix = 'root://cmseos.fnal.gov//'
+        allow_prefetch = True
+    expanded_paths = [(prefix + '/' + f if prefix else f) for f in filepaths]
+    return expanded_paths, allow_prefetch
 
 def deltar(df):
     df['deta']=df['cl3d_eta']-df['genpart_exeta']
@@ -34,11 +61,11 @@ def openroot(files, algo_trees, gen_tree):
             'cl3d_ntc67', 'cl3d_ntc90']
     
     for filename in files:
-        gens.append(uproot.open(filename)[gen_tree].arrays(branches_gen, library='pd'))
+        gens.append(uproot4.open(filename)[gen_tree].arrays(branches_gen, library='pd'))
         for algo_name, algo_tree in algo_trees.items():
             if not algo_name in algos:
                 algos[algo_name] = []
-            tree = uproot.open(filename)[algo_tree]
+            tree = uproot4.open(filename)[algo_tree]
             df_cl = tree.arrays(branches_cl3d, library='pd')
             # Trick to read layers pTs, which is a vector of vector
             df_cl['cl3d_layer_pt'] = list(chain.from_iterable(tree.arrays(['cl3d_layer_pt'])[b'cl3d_layer_pt'].tolist()))
@@ -50,14 +77,19 @@ def openroot(files, algo_trees, gen_tree):
         df_algos[algo_name] = pd.concat(dfs)
     return(df_gen, df_algos)
 
-def preprocessing(param):
-    files=param.files
-    threshold=param.threshold
-    algo_trees=param.algo_trees
-    gen_tree=param.gen_tree
-    output_file_name=param.output_file_name
-    bestmatch_only = param.bestmatch_only
-    reachedEE = param.reachedEE
+def get_output_name(md, jobid):
+    info = md['jobs'][jobid]
+    return '{samp}_{idx}.root'.format(samp=md['name'], idx=info['idx'])
+
+def preprocessing(md):
+    files= md['jobs'][args.jobid]['inputfiles']
+    threshold=md['threshold']
+    algo_trees=md['algo_trees']
+    gen_tree=md['gen_tree']
+    bestmatch_only =md['bestmatch_only']
+    reachedEE = md['reachedEE']
+
+    output_name = get_output_name(md, args.jobid)
 
     gen,algo=openroot(files, algo_trees, gen_tree)
     n_rec={}
@@ -99,8 +131,8 @@ def preprocessing(param):
         unmatched_pos=algo_pos_merged[sel]
         sel=pd.isna(algo_neg_merged['deltar'])  
         unmatched_neg=algo_neg_merged[sel]
-        unmatched_pos['matches']=False
-        unmatched_neg['matches']=False
+        unmatched_pos.loc[:,'matches'] = False
+        unmatched_neg.loc[:,'matches'] = False
         
         #select deltar under threshold
         sel=algo_pos_merged['deltar']<=threshold
@@ -135,25 +167,30 @@ def preprocessing(param):
         #  algo_clean[algo_name].drop(columns=['best_match'], inplace=True)
 
     #save files to savedir in HDF
-    store = pd.HDFStore(output_file_name, mode='w')
+    store = pd.HDFStore(output_name, mode='w')
     store['gen_clean'] = gen_clean
     for algo_name, df in algo_clean.items():
         store[algo_name] = df
     store.close()
-        
-        
-if __name__=='__main__':
-    parser = optparse.OptionParser()
-    parser.add_option("--cfg",type="string", dest="params", help="select the path to the parameters file")
-   
-    (opt, args) = parser.parse_args()
 
+    cmd = 'xrdcp --silent -p -f {outputname} {outputdir}/{outputname}'.format(
+        outputname=output_name, outputdir=xrd_prefix(md['joboutputdir'])[0][0])        
+    print(cmd)
+    p = subprocess.Popen(cmd, shell=True)
+
+if __name__=='__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--metadata',
+                        default='metadata.json',
+                        help='Path to the metadata file. Default:%(default)s')
+    parser.add_argument('jobid', type=int, help='Index of the output job.')
+
+    args = parser.parse_args()
+   
     # Loading configuration parameters
-    import importlib
-    import sys
-    current_dir = os.getcwd();
-    sys.path.append(current_dir)
-    param=importlib.import_module(opt.params)
+    import json
+    with open(args.metadata) as fp:
+        md = json.load(fp)
     
-    preprocessing(param)
+    preprocessing(md)
 

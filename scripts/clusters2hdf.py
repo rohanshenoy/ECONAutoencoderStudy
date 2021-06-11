@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import os
 import sys
-import uproot # uproot4
+import uproot4
 from datetime import date
-import optparse
+import argparse
 from itertools import chain
 import xgboost as xgb
 
@@ -16,6 +16,29 @@ def maxpt(group):
     maxi = group.loc[group['cl3d_pt_corr'].idxmax()]
     return maxi
 
+def xrd_prefix(filepaths):
+    prefix = ''
+    allow_prefetch = False
+    if not isinstance(filepaths, (list, tuple)):
+        filepaths = [filepaths]
+    filepath = filepaths[0]
+    if filepath.startswith('/eos/cms'):
+        prefix = 'root://eoscms.cern.ch/'
+    elif filepath.startswith('/eos/user'):
+        prefix = 'root://eosuser.cern.ch/'
+    elif filepath.startswith('/eos/uscms'):
+        prefix = 'root://cmseos.fnal.gov/'
+    elif filepath.startswith('/store/'):
+        # remote file                                                                                                                                                                                                                                                         
+        import socket
+        host = socket.getfqdn()
+        if 'cern.ch' in host:
+            prefix = 'root://xrootd-cms.infn.it//'
+        else:
+            prefix = 'root://cmseos.fnal.gov//'
+        allow_prefetch = True
+    expanded_paths = [(prefix + '/' + f if prefix else f) for f in filepaths]
+    return expanded_paths, allow_prefetch
 
 def openroot(files, algo_trees, bdts, working_points,
         calibration_weights, correction_cluster, correction_inputs, additive_correction,
@@ -36,7 +59,7 @@ def openroot(files, algo_trees, bdts, working_points,
             print('>>', algo_name)
             if not algo_name in algos:
                 algos[algo_name] = []
-            tree = uproot.open(filename)[algo_tree]
+            tree = uproot4.open(filename)[algo_tree]
             df_cl = tree.arrays(branches_cl3d, library='pd')
             # Counting number of events before any preselection
             if ialgo==0:
@@ -85,23 +108,33 @@ def openroot(files, algo_trees, bdts, working_points,
         df_algos[algo_name].set_index('event', inplace=True)
     return events, df_algos
 
-def preprocessing(param):
-    files = param.files
-    algo_trees = param.algo_trees
-    output_file_name = param.output_file_name
-    bdts = param.bdts
-    working_points = param.working_points
-    correction_cluster = param.correction_cluster
-    correction_inputs = param.correction_inputs
-    calibration_weights = param.calibration_weights
-    store_max_only = param.store_max_only
-    additive_correction = param.additive_correction
-    ptcut = param.pt_cut
+def get_output_name(md, jobid):
+    info = md['jobs'][jobid]
+    return '{samp}_{idx}.root'.format(samp=md['name'], idx=info['idx'])
+
+def preprocessing(md):
+    files= md['jobs'][args.jobid]['inputfiles']
+    threshold=md['threshold']
+    algo_trees=md['algo_trees']
+    gen_tree=md['gen_tree']
+    bestmatch_only =md['bestmatch_only']
+    reachedEE = md['reachedEE']
+
+    output_name = get_output_name(md, args.jobid)
+
+    bdts = md['bdts']
+    working_points = md['working_points']
+    correction_cluster = md['correction_cluster']
+    correction_inputs = md['correction_inputs']
+    calibration_weights = md['calibration_weights']
+    store_max_only = md['store_max_only']
+    additive_correction = md['additive_correction']
+    ptcut = md['pt_cut']
 
     events, algo = openroot(files, algo_trees, bdts, working_points, 
-            calibration_weights, correction_cluster, correction_inputs, additive_correction,
-            ptcut, store_max_only)
-
+                            calibration_weights, correction_cluster, correction_inputs, additive_correction,
+                            ptcut, store_max_only)
+    
     #save files to savedir in HDF
     store = pd.HDFStore(output_file_name, mode='w')
     for algo_name, df in algo.items():
@@ -113,17 +146,18 @@ def preprocessing(param):
         
         
 if __name__=='__main__':
-    parser = optparse.OptionParser()
-    parser.add_option("--cfg",type="string", dest="params", help="select the path to the parameters file")
-   
-    (opt, args) = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--metadata',
+                default='metadata.json',
+                        help='Path to the metadata file. Default:%(default)s')
+    parser.add_argument('jobid', type=int, help='Index of the output job.')
+
+    args = parser.parse_args()
 
     # Loading configuration parameters
-    import importlib
-    import sys
-    current_dir = os.getcwd();
-    sys.path.append(current_dir)
-    param=importlib.import_module(opt.params)
+    import json
+    with open(args.metadata) as fp:
+        md = json.load(fp)
     
-    preprocessing(param)
+    preprocessing(md)
 

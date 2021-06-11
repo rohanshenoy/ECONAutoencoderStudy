@@ -8,15 +8,34 @@ Scripts and notebooks in this package should be run with python 3 (they have bee
 
 ## e/g cluster energy correction and resolution study
 ### Preprocessing
-The preprocessing script `scripts/matching.py` takes as input HGCAL TPG ntuples and produces pandas dataframes in HDF files. It is selecting gen particles reaching the HGCAL and matching them with reconstructed clusters.
+The preprocessing script `scripts/matching.py` takes as input HGCAL TPG ntuples and produces pandas dataframes in HDF files. It is selecting gen particles reaching the HGCAL and matching them with reconstructed clusters. This step is done for electrons, photons and pions.
 
-As it can take some time to run on all events, this script is associated with a batch launcher script `scripts/batch.py`, which launches jobs to run on multiple input files. This launcher script is meant to run on the LLR batch, but could easily be adapted to any other batch system.
+As it can take some time to run on all events, this script is associated with a job launcher script `scripts/submit_condor.py`, which launches jobs to run on multiple input files. 
 
-An example of configuration file for `batch.py` is provided in `scripts/batch_matching_autoencoder_sigdriven_210430_cfg.py`. The command is:
+An example of configuration file is provided in `scripts/batch_matching_autoencoder_sigdriven_210611_cfg.py`. The command is:
 ```bash
-batch.py --cfg batch_matching_autoencoder_sigdriven_210430_cfg
+cd scripts/
+mkdir -p condor/
+python submit_condor.py --cfg batch_matching_autoencoder_sigdriven_210611_cfg
 ```
 (Note that the config file is given without the `.py` extension)
+
+This script will create condor submission files. 
+
+To be able to run these files (in cmslpc) you should tar your python3 CMSSW environment and copy it to your eos.
+```
+cd $CMSSW_BASE/../
+tar -zvcf CMSSW_11_3_0.tgz CMSSW_11_3_0  --exclude="*.pdf" --exclude="*.pyc" --exclude=tmp --exclude-vcs --exclude-caches-all --exclude="*err*" --exclude=*out_* --exclude=condor --exclude=.git --exclude=src
+mv CMSSW_11_3_0.tgz /eos/uscms/store/user/$USER/
+```
+
+Then you can execute the condor submission, e.g.:
+```
+  condor_submit condor/3_22_1/electron_photon_signaldriven//v_1_2021-06-11/photons/submit.cmd 
+  condor_submit condor/3_22_1/electron_photon_signaldriven//v_1_2021-06-11/electrons/submit.cmd 
+```
+
+(make sure you have a valid proxy before submitting condor jobs).
 
 ### Energy correction and resolution notebook
 The dataframes produced at the preprocessing step are used in the notebook `notebooks/electron_photon_calibration_autoencoder_210430.ipynb`. This notebook is performing the following:
