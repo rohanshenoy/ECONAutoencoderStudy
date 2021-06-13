@@ -6,6 +6,10 @@ Scripts and notebooks in this package should be run with python 3 (they have bee
 - scikit-learn
 - xgboost
 
+## Input ntuples
+
+All the information about the input data can be found in the `fragments` folder.
+
 ## e/g cluster energy correction and resolution study
 ### Preprocessing
 The preprocessing script `scripts/matching.py` takes as input HGCAL TPG ntuples and produces pandas dataframes in HDF files. It is selecting gen particles reaching the HGCAL and matching them with reconstructed clusters. This step is done for electrons, photons and pions.
@@ -37,22 +41,41 @@ Then you can execute the condor submission, e.g.:
 
 (make sure you have a valid proxy before submitting condor jobs).
 
+### Setup for python notebooks
+You can execute this notebeook in your own computer (w. python3 and uproot4). You can also create a conda environment with all the needed packages:
+
+```
+conda create -n econ-ae python=3.8
+conda activate econ-ae
+pip install numpy pandas scikit-learn scipy matplotlib uproot coffea jupyterlab xgboost tables
+```
+
+And then, download the data you just processed, e.g.:
+```
+cd notebooks/
+mkdir data/
+mkdir img/
+scp -r cmslpc-sl7.fnal.gov:/eos/uscms/store/user/cmantill/HGCAL/study_autoencoder/3_22_1/ data/
+```
+
 ### Energy correction and resolution notebook
 The dataframes produced at the preprocessing step are used in the notebook `notebooks/electron_photon_calibration_autoencoder_210430.ipynb`. This notebook is performing the following:
 - Derive layer weight correction factors with 0PU **unconverted** photons
 - Derive $\eta$ dependent linear energy correction (this is an additive correction) with 200PU electrons
 - Produce energy scale and resolution plots, in particular differentially vs  $|\eta|$ and $p_T$
 
+The output of this notebook is used for the next step so make sure you upload your data folder to the repository.
+
 ## Electron vs PU discrimination
 ### Preprocessing
 Electron preprocessed files produced in the previous step are used here as well. Only PU events need to be preprocessed now. This is very similar to the electron and photon preprocessing, except that no matching is performed, and energy corrections previously derived are applied to PU clusters.
 
-The PU preprocessing script is `scripts/clusters2hdf.py` and the associated batch launcher is `scripts/batch_nomatching.py`. An example of config file is provided in `scripts/batch_nomatching_pu_for_id_autoencoder_sigdriven_210430_cfg.py`. The command is:
+The PU preprocessing script is `scripts/clusters2hdf.py` and the associated configs needs to have the clustering option = 0.
+An example of config file is provided in `scripts/batch_nomatching_pu_for_id_autoencoder_sigdriven_210430_cfg.py`. The command is:
 ```bash
-batch_nomatching.py --cfg batch_nomatching_pu_for_id_autoencoder_sigdriven_210430_cfg
+python submit_condor.py --cfg batch_nomatching_pu_for_id_autoencoder_sigdriven_210430_cfg
 ```
 (Note that the config file is given without the `.py` extension)
-
 
 ### BDT hyperparameters tuning notebook
 It is important to note that trigger rates, which is the ultimate metric, require a lot of statistics. Given the size of the available neutrino gun or MinBias samples, the full statistics of these samples need to be used to produce final rate plots. Which means that a lot of attention should be put on the control of the overtraining of our BDTs, since they will be applied on events used to train them.

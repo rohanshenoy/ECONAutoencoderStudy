@@ -25,6 +25,7 @@ def batch_files(files, file_per_batch):
     j=0
     batches[j]=[]
     for i, filename in enumerate(files):
+        filename = filename.replace('/eos/uscms/','root://cmseos.fnal.gov//')
         batches[j].append(filename)
         if i%file_per_batch == 0 and i+1<len(files):
             j+=1
@@ -77,7 +78,8 @@ def prepare_submit(name, batches, job_dir, md):
     # prepare the list of files to transfer
     metadata_file_name = '{0}/metadata.json'.format(job_dir)
     script_file_name = os.path.join(os.path.dirname(__file__), 'run_processor.sh')
-    files_to_transfer = [metadata_file_name, script_file_name]
+    clustering_file_name =  os.path.join(os.path.dirname(__file__), md['clustering'])
+    files_to_transfer = [metadata_file_name, script_file_name, clustering_file_name]
     files_to_transfer = [os.path.abspath(f) for f in files_to_transfer]
 
     # condor jdl
@@ -87,7 +89,7 @@ def prepare_submit(name, batches, job_dir, md):
     request_memory        = {request_memory}
     request_disk          = 10000000
     executable            = {scriptfile}
-    arguments             = $(clustering) $(jobid)
+    arguments             = {clustering} $(jobid)
     transfer_input_files  = {files_to_transfer}
     output                = {jobdir}/logs/$(jobid).out
     error                 = {jobdir}/logs/$(jobid).err
