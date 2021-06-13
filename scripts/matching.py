@@ -79,7 +79,7 @@ def openroot(files, algo_trees, gen_tree):
 
 def get_output_name(md, jobid):
     info = md['jobs'][jobid]
-    return '{samp}_{idx}.root'.format(samp=md['name'], idx=info['idx'])
+    return '{samp}_{idx}.hdf5'.format(samp=md['name'], idx=info['idx'])
 
 def preprocessing(md):
     files= md['jobs'][args.jobid]['inputfiles']

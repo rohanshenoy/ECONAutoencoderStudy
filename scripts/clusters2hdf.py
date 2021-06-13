@@ -110,7 +110,7 @@ def openroot(files, algo_trees, bdts, working_points,
 
 def get_output_name(md, jobid):
     info = md['jobs'][jobid]
-    return '{samp}_{idx}.root'.format(samp=md['name'], idx=info['idx'])
+    return '{samp}_{idx}.hdf5'.format(samp=md['name'], idx=info['idx'])
 
 def preprocessing(md):
     files= md['jobs'][args.jobid]['inputfiles']
@@ -136,12 +136,12 @@ def preprocessing(md):
                             ptcut, store_max_only)
     
     #save files to savedir in HDF
-    store = pd.HDFStore(output_file_name, mode='w')
+    store = pd.HDFStore(output_name, mode='w')
     for algo_name, df in algo.items():
         store[algo_name] = df
     store.close()
     # Save number of events before preselection
-    with open(os.path.splitext(output_file_name)[0]+'.txt', 'w') as f:
+    with open(os.path.splitext(output_name)[0]+'.txt', 'w') as f:
         print(events, file=f)
         
         
