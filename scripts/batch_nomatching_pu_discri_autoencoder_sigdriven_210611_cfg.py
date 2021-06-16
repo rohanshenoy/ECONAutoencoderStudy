@@ -9,13 +9,13 @@ local = False
 clustering_script = 'clusters2hdf.py'
 clustering_option = 0
 
-files_batch = {
+files = {
     'MinBias': glob('/eos/uscms/store/user/dnoonan/MinBias_TuneCP5_14TeV-pythia8/crab_AE_minBias_3_23_2/210605_202018/0000/ntuple_*.root')
 }
 
 # if local test, use only one input file
 if local:
-    files_batch['MinBias'] = files_batch['MinBias'][:1]
+    files['MinBias'] = files_batch['MinBias'][:1]
 
 eos_output_dir = '/eos/uscms/store/user/cmantill/HGCAL/study_autoencoder/'
 job_output_dir = '3_22_1/pu_discri_signaldriven/'
@@ -43,7 +43,7 @@ store_max_only = True
 
 # Load energy calibration/correction data
 data_dir = '/eos/uscms/store/user/cmantill/HGCAL/data/'
-data_tag = '210430'
+data_tag = '210611'
 with open('%s/layer_weights_photons_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:
     calibration_weights = pickle.load(f)
 with open('%s/lineareta_electrons_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:
