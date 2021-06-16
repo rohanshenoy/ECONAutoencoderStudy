@@ -113,12 +113,12 @@ scram b -j4
 
 Getting configs:
 ```
-cd L1Trigger/L1THGCal/test
+cd L1Trigger/L1THGCalUtilities/test
 wget https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py
 wget https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
 ```
 
-Get models:
+Get training models:
 ```
 cd  ../L1THGCal/data/
 # copy AEmodels folder in data/ dir (latest models available at https://www.dropbox.com/s/f9rib5uyv2f0qzp/AEmodels.tgz?dl=0)
@@ -135,6 +135,11 @@ To submit a large production you will need to run over all the files.
 You can use `crab` for this.
 
 The crab configs are e.g. [here for electrons](https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/eleCrabConfig.py). Make sure to change the output username.
+
+Some example files are already produced here:
+```
+/eos/uscms/store/user/cmantill/HGCAL/AE_Jun11/
+```
 
 ## Processing the ntuples
 
