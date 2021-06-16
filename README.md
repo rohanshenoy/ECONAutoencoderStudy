@@ -6,11 +6,98 @@ Scripts and notebooks in this package should be run with python 3 (they have bee
 - scikit-learn
 - xgboost
 
-## Input ntuples
+## Setup at cmslpc (for procesing data and submitting condor jobs
 
-All the information about the input data can be found in the `fragments` folder.
+Setting up the CMS software and cloning the HGCAL L1 trigger simulation:
+```
+export SCRAM_ARCH=slc7_amd64_gcc900 
+source /cvmfs/cms.cern.ch/cmsset_default.sh # (add this to .bashrc if possible)
+cmsrel CMSSW_11_3_0
+cd CMSSW_11_3_0/src/
+cmsenv
+git cms-init
+git remote add pfcaldev https://github.com/PFCal-dev/cmssw.git
+git fetch pfcaldev
+git cms-merge-topic -u PFCal-dev:v3.23.3_1130
+scram b -j4
+```
+
+Get configuration files:
+```
+cd L1Trigger/L1THGCalUtilities/test
+wget https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py
+wget https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
+```
+
+Get training models:
+```
+cd  ../L1THGCal/data/
+# copy AEmodels folder in data/ dir (latest models available at https://www.dropbox.com/s/f9rib5uyv2f0qzp/AEmodels.tgz?dl=0)
+cd -
+```
+
+### Running locally
+Then you can run locally, e.g.:
+```
+cmsRun produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
+```
+This will produce a `ntuple.root` file, which will contain subdirectories, e.g. `FloatingpointAutoEncoderTelescopeMSEDummyHistomaxxydr015Genclustersntuple->cd()` , each with a TTree inside. You can get the contents of the tree with `HGCalTriggerNtuple->Show(0)`.
+
+### Running jobs in crab/
+To submit a large production you will need to run over all the files. 
+You can use `crab` for this. This needs a valid GRID certificate.
+
+The crab configuration files are e.g. [here for electrons](https://github.com/cmantill/ECONAutoencoderStudy/blob/master/fragments/eleCrabConfig.py). Make sure to change the output username.
+
+Some example files are already produced here:
+```
+/eos/uscms/store/user/cmantill/HGCAL/AE_Jun11/
+```
+
+## Setup for juptyer notebooks
+
+
+## Input data for physics studies
+
+We first need to simulate the HGCAL trigger cells using the ECON-T algorithms. For this we use simulated datasets (photons, electrons, pileup).
+Full documentation can be found [here](https://twiki.cern.ch/twiki/bin/viewauth/CMS/HGCALTriggerPrimitivesSimulation).
+This repository is used to simulate all the ECON-T algorithms in the CMS official simulation (cmssw).
+
+We are currently running with TPG release v3.23.3_1130.
+A short history of releases is the following:
+- v3.22.1. (had bug on normalization fixed by danny [here](https://github.com/PFCal-dev/cmssw/commit/65625ee12e0c1a527820d20aeaaa656cf6f4df48#diff-0003f7b8caf7041ba5afce04bcfa74b1a2593d991fc3b5b84294d5ee9e680ae4)
+- v3.23.3_1130 (fixes in for AE)
+
+### Configuration files
+To run this we need configuration files. These are the following:
+- For 200PU electron gun ( /SingleElectron_PT2to200/Phase2HLTTDRWinter20DIGI-PU200_110X_mcRun4_realistic_v3_ext2-v2/GEN-SIM-DIGI-RAW) and 0PU photon gun (/SinglePhoton_PT2to200/Phase2HLTTDRWinter20DIGI-NoPU_110X_mcRun4_realistic_v3-v2/GEN-SIM-DIGI-RAW):
+`produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py`
+
+- For 200PU MinBias (/MinBias_TuneCP5_14TeV-pythia8/Phase2HLTTDRWinter20DIGI-PU200_110X_mcRun4_realistic_v3-v3/GEN-SIM-DIGI-RAW/):
+`produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py`
+
+### AutoEncoder implementation 
+The implementation of the AutoEncoder (AE) in CMSSW is in [HGCalConcentratorAutoEncoderImpl.cc](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc):
+- The [`select` function](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L122-L174) gets called once per event per wafer.
+- It first loops over the trigger cells, remaps from the TC U/V coordinates to the 0-47 indexing we have been using for the training, then fills the mipPt list.
+```  
+for (const auto& trigCell : trigCellVecInput) {
+    ...
+    modSum += trigCell.mipPt();
+}
+```
+- Then it normalizes the mipPt list, and quantizes it. 
+- Puts stuff into tensors and [runs the encoder with tensorflow](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L198-L225)
+- [Runs the decoder](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L227-L248)
+- Loops over decoded values, and [puts them back into trigger cell objects](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/src/concentrator/HGCalConcentratorAutoEncoderImpl.cc#L256-L304) (which is what the backend code is expecting and uses)
+- There are different configuration options, to allow multiple trainings for different number of eLinks in the [hgcalConcentratorProducer](https://github.com/PFCal-dev/cmssw/blob/v3.23.3_1130/L1Trigger/L1THGCal/python/hgcalConcentratorProducer_cfi.py#L184-L226)
+
+[comment]: <> (Danny's config /uscms/home/dnoonan/work/HGCAL/CMSSW_11_2_0_pre5/src/L1Trigger/L1THGCalUtilities/test/NewTrainings_QKeras_cfg.py)
+[comment]: <> (it requires the models dir /uscms/home/dnoonan/work/HGCAL/CMSSW_11_2_0_pre5/src/L1Trigger/L1THGCalUtilities/test/AEmodels)
 
 ## e/g cluster energy correction and resolution study
+
+
 ### Preprocessing
 The preprocessing script `scripts/matching.py` takes as input HGCAL TPG ntuples and produces pandas dataframes in HDF files. It is selecting gen particles reaching the HGCAL and matching them with reconstructed clusters. This step is done for electrons, photons and pions.
 
