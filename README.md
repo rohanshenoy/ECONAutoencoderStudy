@@ -6,7 +6,8 @@ Scripts and notebooks in this package should be run with python 3 (they have bee
 - scikit-learn
 - xgboost
 
-## Setup at cmslpc (for procesing data and submitting condor jobs
+## Setup at cmslpc 
+For procesing data and submitting condor jobs.
 
 Setting up the CMS software and cloning the HGCAL L1 trigger simulation:
 ```
@@ -33,6 +34,9 @@ Get training models:
 ```
 cd  ../L1THGCal/data/
 # copy AEmodels folder in data/ dir (latest models available at https://www.dropbox.com/s/f9rib5uyv2f0qzp/AEmodels.tgz?dl=0)
+# i.e. scp AEmodels.tgz cmslpc-sl7.fnal.gov:YOURLOCATION/L1THGCal/data/ 
+tar zxvf AEmodels.tgz
+# then go back to your directory
 cd -
 ```
 
@@ -41,9 +45,10 @@ Then you can run locally, e.g.:
 ```
 cmsRun produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
 ```
+(`produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py` contains a file that can be found in the cmslpc cluster so there is no need to have a grid certificate for this step).
 This will produce a `ntuple.root` file, which will contain subdirectories, e.g. `FloatingpointAutoEncoderTelescopeMSEDummyHistomaxxydr015Genclustersntuple->cd()` , each with a TTree inside. You can get the contents of the tree with `HGCalTriggerNtuple->Show(0)`.
 
-### Running jobs in crab/
+### Running jobs in crab
 To submit a large production you will need to run over all the files. 
 You can use `crab` for this. This needs a valid GRID certificate.
 
@@ -55,7 +60,20 @@ Some example files are already produced here:
 ```
 
 ## Setup for juptyer notebooks
+For running the notebooks.
+```
+conda create -n econ-ae python=3.8
+conda activate econ-ae
+pip install numpy pandas scikit-learn scipy matplotlib uproot coffea jupyterlab xgboost tables
+```
 
+And then, download the data you just processed, e.g.:
+```
+cd notebooks/
+mkdir data/
+mkdir img/
+scp -r cmslpc-sl7.fnal.gov:/eos/uscms/store/user/cmantill/HGCAL/study_autoencoder/3_22_1/ data/
+```
 
 ## Input data for physics studies
 
@@ -127,23 +145,6 @@ Then you can execute the condor submission, e.g.:
 ```
 
 (make sure you have a valid proxy before submitting condor jobs).
-
-### Setup for python notebooks
-You can execute this notebeook in your own computer (w. python3 and uproot4). You can also create a conda environment with all the needed packages:
-
-```
-conda create -n econ-ae python=3.8
-conda activate econ-ae
-pip install numpy pandas scikit-learn scipy matplotlib uproot coffea jupyterlab xgboost tables
-```
-
-And then, download the data you just processed, e.g.:
-```
-cd notebooks/
-mkdir data/
-mkdir img/
-scp -r cmslpc-sl7.fnal.gov:/eos/uscms/store/user/cmantill/HGCAL/study_autoencoder/3_22_1/ data/
-```
 
 ### Energy correction and resolution notebook
 The dataframes produced at the preprocessing step are used in the notebook `notebooks/electron_photon_calibration_autoencoder_210430.ipynb`. This notebook is performing the following:
