@@ -9,6 +9,9 @@ from datetime import date
 import argparse
 from itertools import chain
 import xgboost as xgb
+import subprocess
+
+from sklearn.linear_model import LinearRegression
 
 workdir=os.getcwd()
 
@@ -28,7 +31,7 @@ def xrd_prefix(filepaths):
         prefix = 'root://eosuser.cern.ch/'
     elif filepath.startswith('/eos/uscms'):
         prefix = 'root://cmseos.fnal.gov/'
-    elif filepath.startswith('/store/'):
+    elif fillepath.startswith('/store/'):
         # remote file                                                                                                                                                                                                                                                         
         import socket
         host = socket.getfqdn()
@@ -53,13 +56,19 @@ def openroot(files, algo_trees, bdts, working_points,
             'cl3d_layer90', 'cl3d_ntc67', 'cl3d_ntc90']
     
     for filename in files:
+        print('> Copying', filename)
+        tmpname = filename.split('/')[-1]
+        cmd = 'xrdcp --silent -p -f {inputname} {tmpname}'.format(
+            inputname=filename, tmpname=tmpname)
+        print(cmd)
+        #p = subprocess.Popen(cmd, shell=True)        
         print('> Reading', filename)
         ialgo = 0
         for algo_name, algo_tree in algo_trees.items():
             print('>>', algo_name)
             if not algo_name in algos:
                 algos[algo_name] = []
-            tree = uproot4.open(filename)[algo_tree]
+            tree = uproot4.open(tmpname)[algo_tree]
             df_cl = tree.arrays(branches_cl3d, library='pd')
             # Counting number of events before any preselection
             if ialgo==0:
@@ -114,11 +123,7 @@ def get_output_name(md, jobid):
 
 def preprocessing(md):
     files= md['jobs'][args.jobid]['inputfiles']
-    threshold=md['threshold']
     algo_trees=md['algo_trees']
-    gen_tree=md['gen_tree']
-    bestmatch_only =md['bestmatch_only']
-    reachedEE = md['reachedEE']
 
     output_name = get_output_name(md, args.jobid)
 
@@ -147,17 +152,22 @@ def preprocessing(md):
         
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--metadata',
-                default='metadata.json',
+    parser.add_argument('-m', '--metadata',default='metadata.json',
                         help='Path to the metadata file. Default:%(default)s')
     parser.add_argument('jobid', type=int, help='Index of the output job.')
 
     args = parser.parse_args()
 
     # Loading configuration parameters
-    import json
-    with open(args.metadata) as fp:
-        md = json.load(fp)
-    
+    if '.json' in args.metadata:
+        import json
+        with open(args.metadata) as fp:
+            md = json.load(fp)
+    else:
+        import pickle
+        with open(args.metadata, 'rb') as fp:
+            md = pickle.load(fp)
+        print(md)
+
     preprocessing(md)
 

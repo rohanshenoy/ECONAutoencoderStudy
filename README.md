@@ -111,9 +111,9 @@ The PU preprocessing script is `scripts/clusters2hdf.py` and the associated conf
 
 An example of config file is provided in `scripts/batch_nomatching_pu_for_id_autoencoder_sigdriven_210611_cfg.py`. The command is:
 ```bash
-python submit_condor.py --cfg batch_nomatching_pu_for_id_autoencoder_sigdriven_210611_cfg
+python3 submit_condor.py --cfg batch_nomatching_pu_for_id_autoencoder_sigdriven_210611_cfg
 ```
-(Note that the config file is given without the `.py` extension)
+(Note that the config file is given without the `.py` extension and that we need python3 to open the pickle files)
 
 The dataframes produced in this step can be used to train a discriminator (BDT) that classifies signal (electrons) and background (pileup). 
 
@@ -121,9 +121,9 @@ The PU preprocessing can then be rerun with different settings, adding a cluster
 
 The config file is `scripts/batch_nomatching_pu_discri_autoencoder_sigdriven_210611_cfg.py`, and the command is, as before:
 ```bash
-python submit_condor.py --cfg batch_nomatching_pu_discri_autoencoder_sigdriven_210611_cfg
+python3 submit_condor.py --cfg batch_nomatching_pu_discri_autoencoder_sigdriven_210611_cfg
 ```
-(Note that the config file is given without the `.py` extension)
+(Note that the config file is given without the `.py` extension and that we need python3 to open the pickle files)
 
 ## Setup for juptyer notebooks
 For running the notebooks that analyze the pandas dataframes.

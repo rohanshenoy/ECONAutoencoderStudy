@@ -40,7 +40,7 @@ pt_cut = 20
 store_max_only = False
 
 # Load energy calibration/correction data
-data_dir = '/eos/uscms/store/user/cmantill/HGCAL/data/'
+data_dir = 'data/'
 data_tag = '210611'
 with open('%s/layer_weights_photons_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:  
     calibration_weights = pickle.load(f)
