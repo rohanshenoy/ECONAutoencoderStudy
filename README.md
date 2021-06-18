@@ -193,30 +193,25 @@ for (const auto& trigCell : trigCellVecInput) {
 [comment]: <> (Danny's config /uscms/home/dnoonan/work/HGCAL/CMSSW_11_2_0_pre5/src/L1Trigger/L1THGCalUtilities/test/NewTrainings_QKeras_cfg.py)
 [comment]: <> (it requires the models dir /uscms/home/dnoonan/work/HGCAL/CMSSW_11_2_0_pre5/src/L1Trigger/L1THGCalUtilities/test/AEmodels)
 
-## e/g cluster energy correction and resolution study
+## Notebooks:
 
-
-## Electron vs PU discrimination
-
-### BDT hyperparameters tuning notebook
-It is important to note that trigger rates, which is the ultimate metric, require a lot of statistics. Given the size of the available neutrino gun or MinBias samples, the full statistics of these samples need to be used to produce final rate plots. Which means that a lot of attention should be put on the control of the overtraining of our BDTs, since they will be applied on events used to train them.
-
-The notebook `notebooks/electron_pu_bdt_tuning_autoencoder_210611.ipynb` is meant to find the set of hyperparameters to be used later, with focus on the limitation of overtraining rather than optimal performance. This hyperparameter tuning is currently done by hand, and some automatization could be implemented.  XGBOOST is used to train the BDTs. This notebook is doing the following:
-- Scan of L1 and L2 regularization parameters. 
-- Scan of the learning rate. 
-- Scan of the tree depth. 
-- Checking the behaviour as a function of the number of boosting steps. 
-- Checking overtraining with a final set of hyperparameters
-
-### BDT final training notebook
-The final BDT ID training performed on the full sample is done in the notebook `notebooks/electron_pu_autoencoder_210611.ipynb`. Signal efficiencies as a function of $\eta$ and $p_T$ are computed, for a 99% inclusive signal efficiency working point.
-
-## Turnons and L1 $\to$ offline threshold mapping
-The energy corrections and BDT ID are then used to compute the efficiency turnons in the notebook `notebooks/electron_turnon_autoencoder_210611.ipynb`. 
-
-The turnon curves are finally used to extract the L1 $\to$ offline threshold mappings, which will be used to compare L1 rates as a function of the so-called offline threshold. In our case this offline threshold is defined as the gen-level $p_T$ at which the turnon reaches 95% efficiency.
-
-## Rates
-
-### Rates notebook
-Rate extraction and plotting are implemented in the notebook `notebooks/egamma_rates_autoencoder_210611.ipynb` . Rates as a function of the offline threshold are the final plots used to compare the different algorithms.
+- `electron_photon_calibration_autoencoder_210611.ipynb`:
+   - Derives layer weight correction factors with 0PU unconverted photons
+   - Derives $\eta$ dependent linear energy correction (this is an additive correction) with 200PU electrons
+   - Produces energy scale and resolution plots, in particular differentially vs $|\eta|$ and $p_T$
+- `electron_pu_bdt_tuning_autoencoder_210611.ipynb`: 
+   - Finds the set of hyperparameters to be used later in the training of BDT (discriminator between electrons and PileUp). XGBOOST is used to train the BDTs.
+      - Scans the L1 and L2 regularization parameters. 
+      - Scans the learning rate. 
+      - Scans the BDT tree depth. 
+   - Checks the behaviour of the BDT as a function of the number of boosting steps. 
+   - Checks for overtraining with a final set of hyperparameters. The notebook focuses on the limitation of overtraining rather than optimal performance. This hyperparameter tuning is currently done by hand, and some automatization could be implemented. 
+- `electron_pu_autoencoder_210611.ipynb`: 
+   - Performs the final BDT ID training on the full sample
+   - Computes the signal efficiencies as a function of $\eta$ and $p_T$, for a 99% inclusive signal efficiency working point.
+- `electron_turnon_autoencoder_210611.ipynb`: 
+   - Computes the trigger efficiency turn on curves (using the energy corrections and the BDT ID)
+   - The turn-on curves are finally used to extract the L1 $\to$ offline threshold mappings, which will be used to compare L1 rates as a function of the so-called offline threshold. In our case this offline threshold is defined as the gen-level $p_T$ at which the turnon reaches 95% efficiency.
+- `egamma_rates_autoencoder_210611.ipynb`: 
+   - Extracts the rate and plots the rate as a function of the offline threshold.
+   - These are the final plots used to compare the different algorithms.
