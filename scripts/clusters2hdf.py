@@ -15,6 +15,13 @@ from sklearn.linear_model import LinearRegression
 
 workdir=os.getcwd()
 
+def slice_it(li, cols=2):
+    start = 0
+    for i in range(cols):
+        stop = start + len(li[i::cols])
+        yield li[start:stop]
+        start = stop
+
 def maxpt(group):    
     maxi = group.loc[group['cl3d_pt_corr'].idxmax()]
     return maxi
@@ -43,6 +50,14 @@ def xrd_prefix(filepaths):
     expanded_paths = [(prefix + '/' + f if prefix else f) for f in filepaths]
     return expanded_paths, allow_prefetch
 
+def get_entries(filename,algo_tree):
+    import ROOT
+    rootfile = ROOT.TFile.Open(filename)
+    nentries = rootfile.Get(algo_tree).GetEntries()
+    rootfile.Close()
+    print(nentries)
+    return nentries
+
 def openroot(files, algo_trees, bdts, working_points,
         calibration_weights, correction_cluster, correction_inputs, additive_correction,
         ptcut, store_max_only):
@@ -56,26 +71,41 @@ def openroot(files, algo_trees, bdts, working_points,
             'cl3d_layer90', 'cl3d_ntc67', 'cl3d_ntc90']
     
     for filename in files:
+        '''
         print('> Copying', filename)
-        tmpname = filename.split('/')[-1]
+        cwd = os.getcwd()
+        tmpname = cwd+'/'+filename.split('/')[-1]
         cmd = 'xrdcp --silent -p -f {inputname} {tmpname}'.format(
             inputname=filename, tmpname=tmpname)
         print(cmd)
-        #p = subprocess.Popen(cmd, shell=True)        
-        print('> Reading', filename)
+        p = subprocess.Popen(cmd, shell=True)
+        print('> Reading', tmpname)
+        print(os.listdir())
+        print(os.path.isfile(tmpname))
+        '''
+    
         ialgo = 0
+        entry_stop = 3000
         for algo_name, algo_tree in algo_trees.items():
             print('>>', algo_name)
             if not algo_name in algos:
                 algos[algo_name] = []
-            tree = uproot4.open(tmpname)[algo_tree]
-            df_cl = tree.arrays(branches_cl3d, library='pd')
+
+            nentries = get_entries(filename,algo_tree)
+
+            entries_to_split = slice_it(range(0,nentries),10)
+            for ie,to_split in enumerate(entries_to_split):
+                print('to split ',to_split)
+
+            uproot4.open.defaults["xrootd_handler"] = uproot4.source.xrootd.MultithreadedXRootDSource
+            tree = uproot4.open(filename)[algo_tree]
+            df_cl = tree.arrays(branches_cl3d, library='pd', entry_stop=entry_stop)
             # Counting number of events before any preselection
             if ialgo==0:
                 events += np.unique(df_cl['event']).shape[0]
             ialgo += 1
             # Trick to read layers pTs, which is a vector of vector
-            df_cl['cl3d_layer_pt'] = list(chain.from_iterable(tree.arrays(['cl3d_layer_pt'])[b'cl3d_layer_pt'].tolist()))
+            df_cl['cl3d_layer_pt'] = list(chain.from_iterable(tree.arrays(['cl3d_layer_pt'], entry_stop=entry_stop)[b'cl3d_layer_pt'].tolist()))
             df_cl['cl3d_abseta'] = np.abs(df_cl.cl3d_eta)
             # Applying layer weights and cluster correction
             if calibration_weights and correction_cluster:
@@ -110,7 +140,7 @@ def openroot(files, algo_trees, bdts, working_points,
             print('>>> Number of final clusters', df_cl.shape[0])
 
             algos[algo_name].append(df_cl)
-        
+
     df_algos = {}
     for algo_name, dfs in algos.items():
         df_algos[algo_name] = pd.concat(dfs)
@@ -145,10 +175,17 @@ def preprocessing(md):
     for algo_name, df in algo.items():
         store[algo_name] = df
     store.close()
+
     # Save number of events before preselection
     with open(os.path.splitext(output_name)[0]+'.txt', 'w') as f:
         print(events, file=f)
-        
+
+    cmd = 'xrdcp --silent -p -f {outputname} {outputdir}/{outputname} \n'.format(
+        outputname=output_name, outputdir=xrd_prefix(md['joboutputdir'])[0][0])
+    cmd += 'xrdcp --silent -p -f {outputname} {outputdir}/{outputname}'.format(
+        outputname=os.path.splitext(output_name)[0]+'.txt', outputdir=xrd_prefix(md['joboutputdir'])[0][0])
+    print(cmd)
+    p = subprocess.Popen(cmd, shell=True)        
         
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
