@@ -15,6 +15,12 @@ from sklearn.linear_model import LinearRegression
 
 workdir=os.getcwd()
 
+'''
+clusters2dhf.py
+convert root file w 2d clusters to pd dataframe
+and apply layer and eta corrections derived w electrons and photons
+'''
+
 def slice_it(li, cols=2):
     start = 0
     for i in range(cols):
@@ -91,10 +97,12 @@ def openroot(files, algo_trees, bdts, working_points,
             if ialgo==0:
                 events += np.unique(df_cl['event']).shape[0]
             ialgo += 1
+
             # Trick to read layers pTs, which is a vector of vector
             df_cl['cl3d_layer_pt'] = list(chain.from_iterable(tree.arrays(['cl3d_layer_pt'], entry_stop=entry_stop)[b'cl3d_layer_pt'].tolist()))
             df_cl['cl3d_abseta'] = np.abs(df_cl.cl3d_eta)
-            # Applying layer weights and cluster correction
+
+            # Applying layer weights (to cluster pt per layer) and cluster correction (to cluster pt)
             if calibration_weights and correction_cluster:
                 print('>>> Applying layer weights')
                 layers = np.array(df_cl['cl3d_layer_pt'].tolist())[:,2:15]
@@ -109,9 +117,12 @@ def openroot(files, algo_trees, bdts, working_points,
                 df_cl['cl3d_pt_calib'] = df_cl.cl3d_pt
                 df_cl['cl3d_pt_corr'] = df_cl.cl3d_pt
             print('>>> Total number of cluster', df_cl.shape[0])
+            
+            # Apply cut on corected pT
             print('Applying cut on corrected pT')
             df_cl = df_cl[df_cl.cl3d_pt_corr > ptcut]
             print('>>> Number of clusters after pT cut', df_cl.shape[0])
+
             # Applying ID cut
             if working_points[algo_name] > -999.:
                 print('>>> Computing BDT output')

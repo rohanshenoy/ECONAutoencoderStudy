@@ -16,6 +16,10 @@ warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
 workdir=os.getcwd()
 
+'''
+Matching 3d clusters with gen information
+'''
+
 def xrd_prefix(filepaths):
     prefix = ''
     allow_prefetch = False
@@ -40,6 +44,8 @@ def xrd_prefix(filepaths):
     expanded_paths = [(prefix + '/' + f if prefix else f) for f in filepaths]
     return expanded_paths, allow_prefetch
 
+# compute deltar between 3d cluster and genparticle
+# this is done by looking a the delta-phi and delta-eta
 def deltar(df):
     df['deta']=df['cl3d_eta']-df['genpart_exeta']
     df['dphi']=np.abs(df['cl3d_phi']-df['genpart_exphi'])
@@ -50,6 +56,8 @@ def deltar(df):
 def matching(event):
     return event.cl3d_pt==event.cl3d_pt.max()
 
+# get all branches from tree
+# the pT per layer is a vector of a vector
 def openroot(files, algo_trees, gen_tree):
     gens = []
     algos = {}
@@ -90,18 +98,19 @@ def preprocessing(md):
     reachedEE = md['reachedEE']
 
     output_name = get_output_name(md, args.jobid)
-
+    
+    # read root files
     gen,algo=openroot(files, algo_trees, gen_tree)
     n_rec={}
     algo_clean={}
     
-    # clean particles that are not generator-level or didn't reach endcap
+    # clean particles that are not generator-level (genpart_gen) or didn't reach endcap (genpart_reachedEE)
     sel=gen['genpart_reachedEE']==reachedEE 
     gen_clean=gen[sel]
     sel=gen_clean['genpart_gen']!=-1
     gen_clean=gen_clean[sel]
 
-    # split df_gen_clean in two, one collection for each endcap
+    # split df_gen_clean in two, one collection for each endcap (eta>0 and eta<=0), same for 3d clusters
     sel1=gen_clean['genpart_exeta']<=0
     sel2=gen_clean['genpart_exeta']>0
     gen_neg=gen_clean[sel1]
@@ -116,17 +125,19 @@ def preprocessing(md):
         sel2=df_algo['cl3d_eta']>0
         algo_neg=df_algo[sel1]
         algo_pos=df_algo[sel2]
-        #set the indices
+        # set the indices
         algo_pos.set_index('event', inplace=True)
         algo_neg.set_index('event', inplace=True)
-        #merging gen columns and cluster columns
+
+        # merging gen columns and cluster columns
         algo_pos_merged=gen_pos.join(algo_pos, how='left', rsuffix='_algo')
         algo_neg_merged=gen_neg.join(algo_neg, how='left', rsuffix='_algo')
+
         # compute deltar
         algo_pos_merged['deltar']=deltar(algo_pos_merged)
         algo_neg_merged['deltar']=deltar(algo_neg_merged)
         
-        #keep track of the unmatched values (NaN)
+        # keep track of the unmatched values (NaN)
         sel=pd.isna(algo_pos_merged['deltar']) 
         unmatched_pos=algo_pos_merged[sel]
         sel=pd.isna(algo_neg_merged['deltar'])  
@@ -134,13 +145,13 @@ def preprocessing(md):
         unmatched_pos.loc[:,'matches'] = False
         unmatched_neg.loc[:,'matches'] = False
         
-        #select deltar under threshold
+        # select deltar under threshold (threshold is set in configuration file)
         sel=algo_pos_merged['deltar']<=threshold
         algo_pos_merged=algo_pos_merged[sel]
         sel=algo_neg_merged['deltar']<=threshold
         algo_neg_merged=algo_neg_merged[sel]
         
-        #matching
+        # matching
         group=algo_pos_merged.groupby('event')
         n_rec_pos=group['cl3d_pt'].size()
         algo_pos_merged['best_match']=group.apply(matching).array
@@ -148,7 +159,7 @@ def preprocessing(md):
         n_rec_neg=group['cl3d_pt'].size()
         algo_neg_merged['best_match']=group.apply(matching).array
         
-        #keep matched clusters only
+        # keep matched clusters only
         if bestmatch_only:
             sel=algo_pos_merged['best_match']==True
             algo_pos_merged=algo_pos_merged[sel]
@@ -156,7 +167,7 @@ def preprocessing(md):
             sel=algo_neg_merged['best_match']==True
             algo_neg_merged=algo_neg_merged[sel]
     
-        #remerge with NaN values
+        # remerge with NaN values
         algo_pos_merged=pd.concat([algo_pos_merged, unmatched_pos], sort=False).sort_values('event') 
         algo_neg_merged=pd.concat([algo_neg_merged, unmatched_neg], sort=False).sort_values('event')
         
