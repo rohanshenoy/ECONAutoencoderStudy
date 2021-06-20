@@ -71,19 +71,6 @@ def openroot(files, algo_trees, bdts, working_points,
             'cl3d_layer90', 'cl3d_ntc67', 'cl3d_ntc90']
     
     for filename in files:
-        '''
-        print('> Copying', filename)
-        cwd = os.getcwd()
-        tmpname = cwd+'/'+filename.split('/')[-1]
-        cmd = 'xrdcp --silent -p -f {inputname} {tmpname}'.format(
-            inputname=filename, tmpname=tmpname)
-        print(cmd)
-        p = subprocess.Popen(cmd, shell=True)
-        print('> Reading', tmpname)
-        print(os.listdir())
-        print(os.path.isfile(tmpname))
-        '''
-    
         ialgo = 0
         entry_stop = 3000
         for algo_name, algo_tree in algo_trees.items():
@@ -93,9 +80,9 @@ def openroot(files, algo_trees, bdts, working_points,
 
             nentries = get_entries(filename,algo_tree)
 
-            entries_to_split = slice_it(range(0,nentries),10)
-            for ie,to_split in enumerate(entries_to_split):
-                print('to split ',to_split)
+            #entries_to_split = slice_it(range(0,nentries),10)
+            #for ie,to_split in enumerate(entries_to_split):
+            #    print('to split ',to_split)
 
             uproot4.open.defaults["xrootd_handler"] = uproot4.source.xrootd.MultithreadedXRootDSource
             tree = uproot4.open(filename)[algo_tree]
