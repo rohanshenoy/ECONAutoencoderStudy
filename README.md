@@ -132,7 +132,8 @@ If you are able, you can create a conda environment locally:
 ```
 conda create -n econ-ae python=3.7 # note that 3.7 is important to have dataframe compatibility (otherwise run dataframes w. python 3.8)
 conda activate econ-ae
-pip install numpy pandas scikit-learn scipy matplotlib uproot coffea jupyterlab xgboost tables
+pip install numpy pandas scikit-learn scipy matplotlib uproot coffea jupyterlab tables
+pip install "xgboost==1.3.3"
 ```
 
 or you can use JupyterHub. For this, point your browser to:
