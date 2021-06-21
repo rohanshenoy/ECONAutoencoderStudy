@@ -130,7 +130,7 @@ For running the notebooks that analyze the pandas dataframes.
 
 If you are able, you can create a conda environment locally:
 ```
-conda create -n econ-ae python=3.8
+conda create -n econ-ae python=3.7 # note that 3.7 is important to have dataframe compatibility (otherwise run dataframes w. python 3.8)
 conda activate econ-ae
 pip install numpy pandas scikit-learn scipy matplotlib uproot coffea jupyterlab xgboost tables
 ```
@@ -154,6 +154,8 @@ mkdir data/
 mkdir img/
 scp -r cmslpc-sl7.fnal.gov:/eos/uscms/store/user/cmantill/HGCAL/study_autoencoder/3_22_1/ data/
 ```
+
+For the 2nd and so on notebooks you will need python 3.8, as well as scikit-learn (0.24.1 ?).
 
 ## Description of input data for physics studies
 

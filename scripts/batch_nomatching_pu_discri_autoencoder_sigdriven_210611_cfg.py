@@ -10,7 +10,7 @@ clustering_script = 'clusters2hdf.py'
 clustering_option = 0
 
 files = {
-    'MinBias': glob('/eos/uscms/store/user/dnoonan/MinBias_TuneCP5_14TeV-pythia8/crab_AE_minBias_3_23_2/210605_202018/0000/ntuple_*.root')
+    'MinBias': glob('/eos/uscms/store/user/cmantill/HGCAL/AE_Jun11/MinBias_TuneCP5_14TeV-pythia8/crab_AE_minBias_3_23_2/210611_191016/0000/ntuple_*.root')
 }
 
 # if local test, use only one input file
@@ -20,7 +20,7 @@ if local:
 eos_output_dir = '/eos/uscms/store/user/cmantill/HGCAL/study_autoencoder/'
 job_output_dir = '3_22_1/pu_discri_signaldriven/'
 
-file_per_batch = {'MinBias': 5}
+file_per_batch = {'MinBias': 1}
 
 # List of ECON algorithms
 fes = ['Threshold0', 'Threshold', 'Mixedbcstc',
@@ -37,6 +37,7 @@ for fe in fes:
 # Clusters with a corrected pT below 0GeV are cut
 # Note: there's a 5GeV pT cut applied at the ntuple level on the uncorrected pT
 pt_cut = 0
+
 # Store only the maximum pT cluster (corrected pT)
 # Note: it is the maximum pT cluster among the clusters passing the ID
 store_max_only = True
@@ -46,6 +47,11 @@ data_dir = 'data'
 data_tag = '210611'
 with open('%s/layer_weights_photons_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:
     calibration_weights = pickle.load(f)
+
+for key,item in calibration_weights.items():
+    if isinstance(item, np.ndarray):
+        calibration_weights[key] = item.tolist()
+
 with open('%s/lineareta_electrons_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:
     correction_cluster = pickle.load(f)
 
@@ -53,7 +59,7 @@ additive_correction = True
 correction_inputs = ['cl3d_abseta']
 
 # Load identification data
-ith open('%s/xgboost_electron_pu_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:
+with open('%s/xgboost_electron_pu_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:
     boosters = pickle.load(f)
 bdts = boosters['extended']
 
@@ -61,6 +67,7 @@ bdts = boosters['extended']
 # 99% signal efficiency working point
 with open('%s/xgboost_threshold_electron_pu_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f:
     thresholds = pickle.load(f)
+
 with open('%s/xgboost_tpr_electron_pu_autoencoder_%s.pkl'%(data_dir,data_tag), 'rb') as f: 
     tprs = pickle.load(f)
 

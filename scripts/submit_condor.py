@@ -114,7 +114,7 @@ def prepare_submit(name, batches, job_dir, md, md_name):
                initialdir=os.path.abspath(job_dir),
                transfer_output='transfer_output_files = ""',
                jobids_file=os.path.abspath(jobids_file),
-               request_memory=2000
+               request_memory=4000
            )
 
     condorfile = os.path.join(job_dir, 'submit.cmd')
