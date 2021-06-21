@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import os
-import uproot
 from datetime import date
 from datetime import datetime
 import subprocess
 import time
 import optparse
 import json
+import pickle
 
 def job_version(workdir):
     version_date = "v_1_"+str(date.today())
@@ -35,18 +35,27 @@ def batch_files(files, file_per_batch):
 def prepare_metadata(name, batches, output_dir, eos_output_dir, param, reachedEE): 
     md = dict()
     md['algo_trees'] = param.algo_trees
-    md['gen_tree'] = param.gen_tree
-    md['threshold'] = param.threshold
-    md['bestmatch_only'] = param.bestmatch_only
-    md['reachedEE'] = reachedEE
     md['clustering'] = param.clustering_script
     md['clustering_option'] = param.clustering_option
     md['joboutputdir'] = eos_output_dir
     md['name'] = name
     md['inputfiles'] = []
     md['jobs'] = []
-    
-    if param.clustering_option == 0:
+
+    for idx,b in enumerate(batches.keys()):
+        md['inputfiles'].append(batches[b])
+        md['jobs'].append({'idx': idx, 'inputfiles': batches[b]})
+
+    if param.clustering_option == 1:
+        md['bestmatch_only'] = param.bestmatch_only
+        md['reachedEE'] = reachedEE
+        md['gen_tree'] = param.gen_tree
+        md['threshold'] = param.threshold
+
+        metadata_file_name = '{0}/metadata.json'.format(output_dir)
+        with open(metadata_file_name,'w') as f:
+            json.dump(md, f, ensure_ascii=True, indent=2, sort_keys=True)
+    else:
         md['bdts'] = param.bdts
         md['working_points'] = param.working_points
         md['correction_cluster'] = param.correction_cluster
@@ -56,17 +65,13 @@ def prepare_metadata(name, batches, output_dir, eos_output_dir, param, reachedEE
         md['additive_correction'] = param.additive_correction
         md['pt_cut'] = param.pt_cut
 
-    for idx,b in enumerate(batches.keys()):
-        md['inputfiles'].append(batches[b])
-        md['jobs'].append({'idx': idx, 'inputfiles': batches[b]})
+        metadata_file_name = '{0}/metadata.pkl'.format(output_dir)
+        with open(metadata_file_name, 'wb') as f:
+            pickle.dump(md, f)
 
-    metadata_file_name = '{0}/metadata.json'.format(output_dir)
-    with open(metadata_file_name,'w') as f:
-        json.dump(md, f, ensure_ascii=True, indent=2, sort_keys=True)
+    return md,metadata_file_name
 
-    return md
-
-def prepare_submit(name, batches, job_dir, md):
+def prepare_submit(name, batches, job_dir, md, md_name):
     current = os.getcwd()
     njobs = len(md['jobs'])
     jobids = [str(jobid) for jobid in range(njobs)]
@@ -76,10 +81,9 @@ def prepare_submit(name, batches, job_dir, md):
         f.write('\n'.join(jobids))
 
     # prepare the list of files to transfer
-    metadata_file_name = '{0}/metadata.json'.format(job_dir)
     script_file_name = os.path.join(os.path.dirname(__file__), 'run_processor.sh')
     clustering_file_name =  os.path.join(os.path.dirname(__file__), md['clustering'])
-    files_to_transfer = [metadata_file_name, script_file_name, clustering_file_name]
+    files_to_transfer = [md_name, script_file_name, clustering_file_name]
     files_to_transfer = [os.path.abspath(f) for f in files_to_transfer]
 
     # condor jdl
@@ -110,7 +114,7 @@ def prepare_submit(name, batches, job_dir, md):
                initialdir=os.path.abspath(job_dir),
                transfer_output='transfer_output_files = ""',
                jobids_file=os.path.abspath(jobids_file),
-               request_memory=2000
+               request_memory=4000
            )
 
     condorfile = os.path.join(job_dir, 'submit.cmd')
@@ -126,7 +130,6 @@ def prepare_jobs(param, batches, key):
 
     job_output_dir = 'condor/'+param.job_output_dir
     eos_output_dir = param.eos_output_dir + param.job_output_dir
-    bestmatch_only = param.bestmatch_only
 
     version=job_version(output_dir)
     out_dir=job_output_dir+'/'+version+'/'+key
@@ -135,8 +138,8 @@ def prepare_jobs(param, batches, key):
     if not os.path.exists(out_dir): os.makedirs(out_dir)
     if not os.path.exists(out_dir+'/logs'): os.makedirs(out_dir+'/logs')
 
-    md = prepare_metadata(key, batches, out_dir, out_dir_eos, param, reachedEE=2)
-    cmd = prepare_submit(key, batches, out_dir, md)
+    md,md_name = prepare_metadata(key, batches, out_dir, out_dir_eos, param, reachedEE=2)
+    cmd = prepare_submit(key, batches, out_dir, md, md_name)
 
     return cmd
     
