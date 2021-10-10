@@ -26,8 +26,8 @@ scram b -j4
 Get configuration files:
 ```
 cd L1Trigger/L1THGCalUtilities/test
-wget https://raw.githubusercontent.com/cmantill/ECONAutoencoderStudy/master/fragments/produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
-wget https://raw.githubusercontent.com/cmantill/ECONAutoencoderStudy/master/fragments/produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py
+wget https://raw.githubusercontent.com/rohanshenoy/ECONAutoencoderStudy/master/fragments/produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
+wget https://raw.githubusercontent.com/rohanshenoy/ECONAutoencoderStudy/master/fragments/produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py
 ```
 
 Get training models:
