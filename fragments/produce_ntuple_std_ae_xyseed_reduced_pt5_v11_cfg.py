@@ -103,8 +103,8 @@ triggerCellRemap = [28,29,30,31,0,4,8,12,
                     45,41,37,33,-1,-1,-1,-1,
                     44,40,36,32,-1,-1,-1,-1]
 
-AE_8x8_pool_telescope = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_pool_telescopeLoss/encoder.pb'),
-                                 decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_pool_telescopeLoss/decoder.pb'))
+AE_8x8_pool_telescope = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_c8_S2_tele/encoder.pb'),
+                                 decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_c8_S2_tele/decoder.pb'))
 chains.register_concentrator("AutoEncoderTelescopeMSE", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
                                                                            modelFiles = cms.VPSet([AE_8x8_pool_telescope]), 
