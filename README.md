@@ -33,7 +33,7 @@ wget https://raw.githubusercontent.com/rohanshenoy/ECONAutoencoderStudy/master/f
 Get training models:
 ```
 cd  ../L1THGCal/data/
-# copy AEmodels folder in data/ dir (latest models available at https://www.dropbox.com/s/f9rib5uyv2f0qzp/AEmodels.tgz?dl=0)
+# copy AEmodels folder in data/ dir (latest emd nn models available at https://www.dropbox.com/s/812m6a2vqgu5wwn/AEmodels.tar.gz?dl=0)
 # i.e. scp AEmodels.tgz cmslpc-sl7.fnal.gov:YOURLOCATION/L1THGCal/data/ 
 tar zxvf AEmodels.tgz
 # then go back to your directory
