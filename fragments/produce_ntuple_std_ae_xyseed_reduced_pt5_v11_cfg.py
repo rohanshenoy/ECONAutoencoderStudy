@@ -124,7 +124,7 @@ chains.register_concentrator("AutoEncoderEMDAEMSE",
                                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
 
 AE_8x8_c8_S2_pair_mse = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/encoder.pb'),
-                         decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/decoder.pb'))
+                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/decoder.pb'))
 chains.register_concentrator("AutoEncoderEMDPAIRMSE", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
                                                                            modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_huber]), 
