@@ -112,8 +112,8 @@ chains.register_concentrator("AutoEncoderEMDAEMSE",
                                                                            cellRemap = cms.vint32(triggerCellRemap),
                                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
 
-AE_8x8_c8_S2_pair_mse = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_c8_S2_pair_huber/encoder.pb'),
-                         decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_c8_S2_pair_huber/decoder.pb'))
+AE_8x8_c8_S2_pair_mse = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/encoder.pb'),
+                         decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/decoder.pb'))
 chains.register_concentrator("AutoEncoderEMDPAIRHUBER", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
                                                                            modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_mse]), 
@@ -122,8 +122,8 @@ chains.register_concentrator("AutoEncoderEMDPAIRHUBER",
                                                                            cellRemap = cms.vint32(triggerCellRemap),
                                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
 
-AE_8x8_pool_telescope = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_c8_S2_tele/encoder.pb'),
-                                 decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/AEmodels/8x8_c8_S2_tele/decoder.pb'))
+AE_8x8_pool_telescope = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_tele/encoder.pb'),
+                                 decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_tele/decoder.pb'))
 chains.register_concentrator("AutoEncoderTelescopeMSE", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
                                                                            modelFiles = cms.VPSet([AE_8x8_pool_telescope]), 
