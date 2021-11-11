@@ -112,11 +112,11 @@ chains.register_concentrator("AutoEncoderEMDAEMSE",
                                                                            cellRemap = cms.vint32(triggerCellRemap),
                                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
 
-AE_8x8_c8_S2_pair_mse = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/encoder.pb'),
+AE_8x8_c8_S2_pair_huber= cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/encoder.pb'),
                          decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/decoder.pb'))
 chains.register_concentrator("AutoEncoderEMDPAIRHUBER", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
-                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_mse]), 
+                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_huber]), 
                                                                            linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
                                                                            encoderShape=cms.vuint32([1,8,8,1]),
                                                                            cellRemap = cms.vint32(triggerCellRemap),
@@ -149,7 +149,7 @@ chains.register_ntuple("Genclustersntuple", lambda p,i : ntuple.create_ntuple(p,
 # Register trigger chains
 concentrator_algos = [
         'Threshold','Threshold0','Mixedbcstc',
-        'AutoEncoderTelescopeMSE','AutoEncoderEMDAEMSE','AutoEncoderEMDPAIRMSE'
+        'AutoEncoderTelescopeMSE','AutoEncoderEMDAEMSE','AutoEncoderEMDPAIRHUBER'
         ]
 backend_algos = ['Histomaxxydr015']
 ## Make cross product fo ECON and BE algos
