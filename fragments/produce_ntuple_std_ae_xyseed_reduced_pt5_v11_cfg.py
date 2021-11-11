@@ -125,7 +125,7 @@ chains.register_concentrator("AutoEncoderEMDAEMSE",
 
 AE_8x8_c8_S2_pair_huber= cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/encoder.pb'),
                                    decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/decoder.pb'))
-chains.register_concentrator("AutoEncoderEMDPAIRMSE", 
+chains.register_concentrator("AutoEncoderEMDPAIRHUBER", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
                                                                            modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_huber]), 
                                                                            linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
