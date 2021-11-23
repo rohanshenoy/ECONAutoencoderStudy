@@ -1,7 +1,7 @@
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = 'AE_electrons_3_23_2'
+config.General.requestName = 'AE_electrons_11_22_21'
 config.General.workArea = 'crab_projects'
 config.General.transferOutputs = True
 
@@ -12,7 +12,7 @@ config.JobType.maxMemoryMB = 4000
 config.Data.inputDataset = '/SingleElectron_PT2to200/Phase2HLTTDRWinter20DIGI-PU200_110X_mcRun4_realistic_v3_ext2-v2/GEN-SIM-DIGI-RAW'
 config.Data.inputDBS = 'global'
 config.Data.splitting = 'FileBased'
-config.Data.outLFNDirBase = '/store/user/cmantill/HGCAL/AE_Jun11/'
+config.Data.outLFNDirBase = '/store/user/rshenoy/HGCAL/AE_Nov22/'
 config.Data.unitsPerJob = 10
 
 config.Data.publication = False
