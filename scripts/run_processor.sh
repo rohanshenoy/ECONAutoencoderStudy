@@ -9,7 +9,7 @@ echo $2
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 rm *.tgz
 
-xrdcp -f root://cmseos.fnal.gov//store/user/cmantill/CMSSW_11_3_0.tgz ./CMSSW_11_3_0.tgz
+xrdcp -f root://cmseos.fnal.gov//store/user/rshenoy/CMSSW_11_3_0.tgz ./CMSSW_11_3_0.tgz
 tar -zxvf CMSSW_11_3_0.tgz
 rm *.tgz
 mkdir CMSSW_11_3_0/src
