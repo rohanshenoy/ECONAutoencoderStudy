@@ -13,8 +13,8 @@ threshold = 0.05
 
 # Input files
 files = {
-    'photons': glob('/eos/uscms/store/user/dnoonan/SinglePhoton_PT2to200/crab_AE_photons_3_23_2/210605_201932/0000/*.root'),
-    'electrons': glob('/eos/uscms/store/user/dnoonan/SingleElectron_PT2to200/crab_AE_electrons_3_23_2/210605_201806/0000/*.root'),
+    'photons': glob('/eos/uscms/store/user/rshenoy/HGCAL/AE_Nov22/SinglePhoton_PT2to200/crab_AE_photons_11_28_1/211128_232558/0000/*.root'),    
+    'electrons': glob('/eos/uscms/store/user/rshenoy/HGCAL/AE_Nov22/SingleElectron_PT2to200/crab_AE_electrons_11_22_21/211123_220056/0000/*.root'),
     'pions': [],
 }
 if local:
@@ -29,8 +29,8 @@ gen_tree = 'FloatingpointThreshold0DummyHistomaxxydr015GenmatchGenclustersntuple
 bestmatch_only = True
 
 # Output directories
-eos_output_dir = '/eos/uscms/store/user/cmantill/HGCAL/study_autoencoder/'
-job_output_dir = '3_22_1/electron_photon_signaldriven/'
+eos_output_dir = '/eos/uscms/store/user/rshenoy/HGCAL/study_autoencoder/'
+job_output_dir = '11_22_1/electron_photon_signaldriven/'
 
 file_per_batch = {
     'electrons': 5,
@@ -40,10 +40,7 @@ file_per_batch = {
 
 algo_trees = {}
 # List of ECON algorithms
-fes = ['Threshold0', 'Threshold', 'Mixedbcstc',
-       'AutoEncoderTelescopeMSE', 'AutoEncoderStride',
-       'AutoEncoderQKerasTTbar', 'AutoEncoderQKerasEle',
-]
+fes = ['Threshold','Threshold0','Mixedbcstc','AutoEncoderTelescopeMSE','AutoEncoderEMDAEMSE','AutoEncoderEMDPAIRHUBER']
 
 ntuple_template = 'Floatingpoint{fe}Dummy{be}GenmatchGenclustersntuple/HGCalTriggerNtuple'
 algo_trees = {}
