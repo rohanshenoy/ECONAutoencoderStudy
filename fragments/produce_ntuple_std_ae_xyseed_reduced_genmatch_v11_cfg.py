@@ -101,33 +101,45 @@ triggerCellRemap = [28,29,30,31,0,4,8,12,
                     46,42,38,34,-1,-1,-1,-1,
                     45,41,37,33,-1,-1,-1,-1,
                     44,40,36,32,-1,-1,-1,-1]
+#EMD:PAIR_MSE with different _elinks ( all qkeras models with same architecture)
+AE_8x8_c8_S2_pair_mse_2 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_pair_mse/encoder.pb'),
+                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_pair_mse/decoder.pb'))
 
-AE_8x8_c8_S2_ae_mse = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_ae_mse/encoder.pb'),
-                                 decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_ae_mse/decoder.pb'))
-chains.register_concentrator("AutoEncoderEMDAEMSE", 
+AE_8x8_c8_S2_pair_mse_3 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_pair_mse/encoder.pb'),
+                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_pair_mse/decoder.pb'))
+
+AE_8x8_c8_S2_pair_mse_4 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_pair_mse/encoder.pb'),
+                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_pair_mse/decoder.pb'))
+
+AE_8x8_c8_S2_pair_mse_5 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_pair_mse/encoder.pb'),
+                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_pair_mse/decoder.pb'))
+
+chains.register_concentrator("AutoEncoderEMDPAIRMSE", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
-                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_ae_mse]), 
-                                                                           linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_mse_2,AE_8x8_c8_S2_pair_mse_3,AE_8x8_c8_S2_pair_mse_4,AE_8x8_c8_S2_pair_mse_5]), 
+                                                                           linkToGraphMap = cms.vuint32([0,0,0,1,2,3,3,3,3,3,3,3,3,3]),
                                                                            encoderShape=cms.vuint32([1,8,8,1]),
                                                                            cellRemap = cms.vint32(triggerCellRemap),
                                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
 
-AE_8x8_c8_S2_pair_huber= cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/encoder.pb'),
-                         decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_pair_huber/decoder.pb'))
-chains.register_concentrator("AutoEncoderEMDPAIRHUBER", 
-                             lambda p, i : concentrator.create_autoencoder(p, i, 
-                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_huber]), 
-                                                                           linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
-                                                                           encoderShape=cms.vuint32([1,8,8,1]),
-                                                                           cellRemap = cms.vint32(triggerCellRemap),
-                                                                           cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
+#EMD:AE_MSLE
+AE_8x8_c8_S2_ae_msle_2 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_ae_msle/encoder.pb'),
+                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_ae_msle/decoder.pb'))
 
-AE_8x8_pool_telescope = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_tele/encoder.pb'),
-                                 decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEmodels/8x8_c8_S2_tele/decoder.pb'))
-chains.register_concentrator("AutoEncoderTelescopeMSE", 
+AE_8x8_c8_S2_ae_msle_3 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_ae_msle/encoder.pb'),
+                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_ae_msle/decoder.pb'))
+
+AE_8x8_c8_S2_ae_msle_4 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_ae_msle/encoder.pb'),
+                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_ae_msle/decoder.pb'))
+
+AE_8x8_c8_S2_ae_msle_5 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_ae_msle/encoder.pb'),
+                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_ae_msle/decoder.pb'))
+
+
+chains.register_concentrator("AutoEncoderEMDAEMSLE", 
                              lambda p, i : concentrator.create_autoencoder(p, i, 
-                                                                           modelFiles = cms.VPSet([AE_8x8_pool_telescope]), 
-                                                                           linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_ae_msle_2,AE_8x8_c8_S2_ae_msle_3,AE_8x8_c8_S2_ae_msle_4,AE_8x8_c8_S2_ae_msle_5]), 
+                                                                           linkToGraphMap = cms.vuint32([0,0,0,1,2,3,3,3,3,3,3,3,3,3]),
                                                                            encoderShape=cms.vuint32([1,8,8,1]),
                                                                            cellRemap = cms.vint32(triggerCellRemap),
                                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
@@ -148,9 +160,7 @@ chains.register_ntuple("Genclustersntuple", lambda p,i : ntuple.create_ntuple(p,
 
 # Register trigger chains
 concentrator_algos = [
-        'Threshold','Threshold0','Mixedbcstc',
-        'AutoEncoderTelescopeMSE','AutoEncoderEMDAEMSE','AutoEncoderEMDPAIRHUBER'
-        ]
+        'Threshold','Threshold0','Mixedbcstc','AutoEncoderEMDAEMSLE','AutoEncoderEMDPAIRMSE']
 backend_algos = ['Histomaxxydr015']
 ## Make cross product fo ECON and BE algos
 import itertools
