@@ -13,21 +13,18 @@ Setting up the CMS software and cloning the HGCAL L1 trigger simulation:
 ```
 export SCRAM_ARCH=slc7_amd64_gcc900 
 source /cvmfs/cms.cern.ch/cmsset_default.sh # (add this to .bashrc if possible)
-cmsrel CMSSW_11_3_0
-cd CMSSW_11_3_0/src/
+cmsrel CMSSW_12_0_0_pre3
+cd CMSSW_12_0_0_pre3/src/
 cmsenv
 git cms-init
-git remote add pfcaldev https://github.com/PFCal-dev/cmssw.git
-git fetch pfcaldev
-git cms-merge-topic -u PFCal-dev:v3.23.3_1130
+git cms-merge-topic -u dnoonan08:AE-evalOnADC
 scram b -j4
 ```
 
 Get configuration files:
 ```
 cd L1Trigger/L1THGCalUtilities/test
-wget https://raw.githubusercontent.com/rohanshenoy/ECONAutoencoderStudy/master/fragments/produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
-wget https://raw.githubusercontent.com/rohanshenoy/ECONAutoencoderStudy/master/fragments/produce_ntuple_std_ae_xyseed_reduced_genmatch_v11_cfg.py
+cp /uscms/home/cmantill/nobackup/hgcal/CMSSW_12_0_0_pre3/src/L1Trigger/L1THGCalUtilities/test/produce_ntuple_fromelectrongun_genmatch_econdata_v11_cfg.py .
 ```
 
 Get training models:
