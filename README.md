@@ -31,8 +31,7 @@ Get training models:
 ```
 cd  ../L1THGCal/data/
 # copy AEmodels folder in data/ dir 
-#EMD models: https://www.dropbox.com/s/812m6a2vqgu5wwn/AEmodels.tar.gz?dl=0
-#Quantized models: https://www.dropbox.com/s/kazwsfsejqcci3g/QAEmodels.tar.gz?dl=0
+#Quantized EMD models: https://www.dropbox.com/s/flf83eew7d7ttin/QAEModels.tgz
 # i.e. scp AEmodels.tgz cmslpc-sl7.fnal.gov:YOURLOCATION/L1THGCal/data/ 
 tar zxvf AEmodels.tgz
 # then go back to your directory
@@ -42,9 +41,9 @@ cd -
 ### Running locally
 Then you can run locally, e.g.:
 ```
-cmsRun produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py
+cmsRun produce_ntuple_fromelectrongun_genmatch_econdata_v11_cfg.py
 ```
-(`produce_ntuple_std_ae_xyseed_reduced_pt5_v11_cfg.py` contains a file that can be found in the cmslpc cluster so there is no need to have a grid certificate for this step).
+(`cmsRun produce_ntuple_fromelectrongun_genmatch_econdata_v11_cfg.py` contains a file that can be found in the cmslpc cluster so there is no need to have a grid certificate for this step).
 This will produce a `ntuple.root` file, which will contain subdirectories, e.g. `FloatingpointAutoEncoderTelescopeMSEDummyHistomaxxydr015Genclustersntuple->cd()` , each with a TTree inside. You can get the contents of the tree with `HGCalTriggerNtuple->Show(0)`.
 
 ### Running jobs in crab
@@ -75,8 +74,8 @@ As it can take some time to run on all events, both scripts are associated with 
 To be able to run files (in cmslpc) you should tar your python3 CMSSW environment and copy it to your eos space. Also you should have a valid proxy.
 ```
 cd $CMSSW_BASE/../
-tar -zvcf CMSSW_11_3_0.tgz CMSSW_11_3_0  --exclude="*.pdf" --exclude="*.pyc" --exclude=tmp --exclude-vcs --exclude-caches-all --exclude="*err*" --exclude=*out_* --exclude=condor --exclude=.git --exclude=src
-mv CMSSW_11_3_0.tgz /eos/uscms/store/user/$USER/
+tar -zvcf CMSSW_12_0_0_pre3.tgz CMSSW_12_0_0_pre3  --exclude="*.pdf" --exclude="*.pyc" --exclude=tmp --exclude-vcs --exclude-caches-all --exclude="*err*" --exclude=*out_* --exclude=condor --exclude=.git --exclude=src
+mv CMSSW_12_0_0_pre3.tgz /eos/uscms/store/user/$USER/
 ```
 
 An example of configuration file is provided in `scripts/batch_matching_autoencoder_sigdriven_210611_cfg.py`. The command is:
