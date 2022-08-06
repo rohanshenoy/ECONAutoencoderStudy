@@ -13,7 +13,8 @@ process.load('Configuration.Geometry.GeometryExtended2026D49Reco_cff')
 process.load('Configuration.Geometry.GeometryExtended2026D49_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
-process.load('IOMC.EventVertexGenerators.VtxSmearedHLLHC14TeV_cfi')
+#process.load('IOMC.EventVertexGenerators.VtxSmearedHLLHC14TeV_cfi')
+process.load('IOMC.EventVertexGenerators.VtxSmearedHLLHC_cfi')
 process.load('GeneratorInterface.Core.genFilterSummary_cff')
 process.load('Configuration.StandardSequences.SimIdeal_cff')
 process.load('Configuration.StandardSequences.Digi_cff')
@@ -24,15 +25,12 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(5)
+    input = cms.untracked.int32(1)
 )
 
 # Input source
 process.source = cms.Source("PoolSource",
-                            fileNames = cms.untracked.vstring('file:/eos/uscms/store/user/cmantill/HGCAL/example_single_electron/00582F93-5A2A-5847-8162-D81EE503500F.root'),
-                            #fileNames = cms.untracked.vstring('/store/mc/Phase2HLTTDRWinter20DIGI/SingleElectron_PT2to200/GEN-SIM-DIGI-RAW/PU200_110X_mcRun4_realistic_v3_ext2-v2/40000/00582F93-5A2A-5847-8162-D81EE503500F.root'),
-
-                            #fileNames = cms.untracked.vstring('file:/data_cms_upgrade/sauvan/HGCAL/DIGI/Phase2HLTTDRWinter20DIGI/TT_TuneCP5_14TeV-powheg-pythia8/GEN-SIM-DIGI-RAW/PU200_110X_mcRun4_realistic_v3-v2/2D0339A5-751F-3543-BA5B-456EA6E5E294.root'),
+                            fileNames = cms.untracked.vstring('/store/mc/Phase2HLTTDRWinter20DIGI/SingleElectron_PT2to200/GEN-SIM-DIGI-RAW/PU200_110X_mcRun4_realistic_v3_ext2-v2/40000/00582F93-5A2A-5847-8162-D81EE503500F.root'),			
        inputCommands=cms.untracked.vstring(
            'keep *',
            'drop l1tEMTFHit2016Extras_simEmtfDigis_CSC_HLT',
@@ -50,19 +48,28 @@ process.options = cms.untracked.PSet(
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
     version = cms.untracked.string('$Revision: 1.20 $'),
-    annotation = cms.untracked.string('SingleElectronPt10_cfi nevts:10'),
+    annotation = cms.untracked.string('SingleElectronPt10_cfi nevts:1'),
     name = cms.untracked.string('Applications')
 )
 
 # Output definition
 process.TFileService = cms.Service(
     "TFileService",
-    fileName = cms.string("ntuple.root")
+    fileName = cms.string("ntuple_qkeras.root")
     )
 
 # Other statements
+process.genstepfilter.triggerConditions=cms.vstring("generation_step")
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
+
+# generation
+
+
+# path and endpath definitions
+process.load('L1Trigger.L1THGCal.hgcalTriggerPrimitives_cff')
+process.hgcl1tpg_step = cms.Path(process.hgcalTriggerPrimitives)
+process.endjob_step = cms.EndPath(process.endOfProcess)
 
 # load HGCAL TPG simulation
 process.load('L1Trigger.L1THGCal.hgcalTriggerPrimitives_cff')
@@ -78,19 +85,18 @@ import L1Trigger.L1THGCalUtilities.customNtuples as ntuple
 
 # fill cluster layer info
 process.ntuple_multiclusters.FillLayerInfo = True
+process.ntuple_triggercells.FillSimEnergy = True
 
 chains = HGCalTriggerChains()
 # Register algorithms
 ## VFE
-chains.register_vfe("Floatingpoint", vfe.create_vfe)
+chains.register_vfe("Floatingpoint", vfe.CreateVfe())
 ## ECON
-chains.register_concentrator("Threshold",
-        concentrator.create_threshold)
-chains.register_concentrator('Threshold0',
-        lambda p,i :concentrator.create_threshold(p,i,
-            threshold_silicon=0.,threshold_scintillator=0.))
-chains.register_concentrator("Mixedbcstc", 
-                             concentrator.create_mixedfeoptions)
+#chains.register_concentrator("Supertriggercell", concentrator.CreateSuperTriggerCell())
+#chains.register_concentrator("Threshold", concentrator.CreateThreshold())
+chains.register_concentrator("Threshold0", concentrator.CreateThreshold(threshold_silicon=cms.double(-1.), threshold_scintillator=cms.double(-1.)))
+#chains.register_concentrator("Bestchoice", concentrator.CreateBestChoice())
+chains.register_concentrator("Mixedbcstc",concentrator.CreateMixedFeOptions())
 
 # AE models
 triggerCellRemap = [28,29,30,31,0,4,8,12,
@@ -101,67 +107,54 @@ triggerCellRemap = [28,29,30,31,0,4,8,12,
                     46,42,38,34,-1,-1,-1,-1,
                     45,41,37,33,-1,-1,-1,-1,
                     44,40,36,32,-1,-1,-1,-1]
-#EMD:PAIR_MSE with different _elinks ( all qkeras models with same architecture)
-AE_8x8_c8_S2_pair_mse_2 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_pair_mse/encoder.pb'),
-                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_pair_mse/decoder.pb'))
 
-AE_8x8_c8_S2_pair_mse_3 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_pair_mse/encoder.pb'),
-                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_pair_mse/decoder.pb'))
+AE_ttbar = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEModels/encoder_ttbar.pb'),
+                    decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEModels/decoder_ttbar.pb'))
 
-AE_8x8_c8_S2_pair_mse_4 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_pair_mse/encoder.pb'),
-                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_pair_mse/decoder.pb'))
+chains.register_concentrator("AEttbar",
+                             concentrator.CreateAutoencoder(modelFiles = cms.VPSet([AE_ttbar]),
+                                                            linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+                                                            encoderShape=cms.vuint32([1,8,8,1]),
+                                                            cellRemap = cms.vint32(triggerCellRemap),
+                                                            saveEncodedValues = cms.bool(True),
+                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
+AE_egun = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEModels/encoder_egun.pb'),
+                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEModels/decoder_egun.pb'))
 
-AE_8x8_c8_S2_pair_mse_5 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_pair_mse/encoder.pb'),
-                                   decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_pair_mse/decoder.pb'))
+chains.register_concentrator("AEegun",
+                             concentrator.CreateAutoencoder(modelFiles = cms.VPSet([AE_egun]),
+                                                            linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+                                                            encoderShape=cms.vuint32([1,8,8,1]),
+                                                            cellRemap = cms.vint32(triggerCellRemap),
+                                                            saveEncodedValues = cms.bool(True),
+                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
+AE_epgun = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEModels/encoder_epgun.pb'),
+                    decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/QAEModels/decoder_epgun.pb'))
 
-chains.register_concentrator("AutoEncoderEMDPAIRMSE", 
-                             lambda p, i : concentrator.create_autoencoder(p, i, 
-                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_pair_mse_2,AE_8x8_c8_S2_pair_mse_3,AE_8x8_c8_S2_pair_mse_4,AE_8x8_c8_S2_pair_mse_5]), 
-                                                                           linkToGraphMap = cms.vuint32([0,0,0,1,2,3,3,3,3,3,3,3,3,3]),
-                                                                           encoderShape=cms.vuint32([1,8,8,1]),
-                                                                           cellRemap = cms.vint32(triggerCellRemap),
-                                                                           cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
+chains.register_concentrator("AEepgun",
+                             concentrator.CreateAutoencoder(modelFiles = cms.VPSet([AE_epgun]),
+                                                            linkToGraphMap = cms.vuint32([0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+                                                            encoderShape=cms.vuint32([1,8,8,1]),
+                                                            cellRemap = cms.vint32(triggerCellRemap),
+                                                            saveEncodedValues = cms.bool(True),
+                                                            cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
 
-#EMD:AE_MSLE
-AE_8x8_c8_S2_ae_msle_2 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_ae_msle/encoder.pb'),
-                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_2/8x8_c8_S2_ae_msle/decoder.pb'))
+## BE1                                                                                                                                                                            
+chains.register_backend1("Dummy", clustering2d.CreateDummy())
+## BE2                                                                                                                                                                             
+chains.register_backend2("Histomax", clustering3d.CreateHistoMax())
+# Register selector                                                                                                                                                               
+chains.register_selector("Genmatch", selectors.CreateGenMatch())
 
-AE_8x8_c8_S2_ae_msle_3 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_ae_msle/encoder.pb'),
-                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_3/8x8_c8_S2_ae_msle/decoder.pb'))
-
-AE_8x8_c8_S2_ae_msle_4 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_ae_msle/encoder.pb'),
-                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_4/8x8_c8_S2_ae_msle/decoder.pb'))
-
-AE_8x8_c8_S2_ae_msle_5 = cms.PSet(encoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_ae_msle/encoder.pb'),
-                                  decoderModelFile = cms.FileInPath('L1Trigger/L1THGCal/data/Elink_AEmodels/nElinks_5/8x8_c8_S2_ae_msle/decoder.pb'))
-
-
-chains.register_concentrator("AutoEncoderEMDAEMSLE", 
-                             lambda p, i : concentrator.create_autoencoder(p, i, 
-                                                                           modelFiles = cms.VPSet([AE_8x8_c8_S2_ae_msle_2,AE_8x8_c8_S2_ae_msle_3,AE_8x8_c8_S2_ae_msle_4,AE_8x8_c8_S2_ae_msle_5]), 
-                                                                           linkToGraphMap = cms.vuint32([0,0,0,1,2,3,3,3,3,3,3,3,3,3]),
-                                                                           encoderShape=cms.vuint32([1,8,8,1]),
-                                                                           cellRemap = cms.vint32(triggerCellRemap),
-                                                                           cellRemapNoDuplicates = cms.vint32(triggerCellRemap)))
-
-## BE1
-chains.register_backend1("Dummy", clustering2d.create_dummy)
-## BE2
-from L1Trigger.L1THGCal.hgcalBackEndLayer2Producer_cfi import MAX_LAYERS
-dr015 = [0.015]*(MAX_LAYERS+1)
-chains.register_backend2("Histomaxxydr015",
-        lambda p,i : clustering3d.create_histoMaxXY_variableDr(p,i,
-        distances=dr015))
-# Register selector
-chains.register_selector("Genmatch", selectors.create_genmatch)
 # Register ntuples
-ntuple_list = ['event', 'gen', 'multiclusters']
-chains.register_ntuple("Genclustersntuple", lambda p,i : ntuple.create_ntuple(p,i, ntuple_list))
+ntuple_list = ['event', 'gen', 'econdata', 'triggersums', 'triggercells', 'multiclusters']
+chains.register_ntuple("Genclustersntuple", ntuple.CreateNtuple(ntuple_list))
 
 # Register trigger chains
-concentrator_algos = [
-        'Threshold','Threshold0','Mixedbcstc','AutoEncoderEMDAEMSLE','AutoEncoderEMDPAIRMSE']
-backend_algos = ['Histomaxxydr015']
+concentrator_algos = ['Threshold0','Mixedbcstc','AEttbar','AEegun','AEepgun']
+
+backend_algos = ['Histomax']
+
 ## Make cross product fo ECON and BE algos
 import itertools
 for cc,be in itertools.product(concentrator_algos,backend_algos):
@@ -178,10 +171,10 @@ process.selector_step = cms.Path(process.hgcalTriggerSelector)
 process.ntuple_step = cms.Path(process.hgcalTriggerNtuples)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.hgcl1tpg_step, process.selector_step, process.ntuple_step)
+process.schedule = cms.Schedule(process.hgcl1tpg_step, process.selector_step, process.ntuple_step
+)
 
 # Add early deletion of temporary data products to reduce peak memory need
 from Configuration.StandardSequences.earlyDeleteSettings_cff import customiseEarlyDelete
 process = customiseEarlyDelete(process)
 # End adding early deletion
-
